@@ -1,0 +1,267 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSB Classes - Final Secured Master</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Biryani:wght@400;700;800;900&family=Bubblegum+Sans&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --navy: #0f172a;
+            --gold: #fbbf24;
+            --correct-green: #15803d;
+        }
+
+        /* --- GLOBAL PROTECTION --- */
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; user-select: none; -webkit-user-select: none; }
+        input, textarea { user-select: text !important; -webkit-user-select: text !important; }
+        body { margin: 0; padding: 0; background: #020617; font-family: 'Biryani', sans-serif; }
+
+        /* --- LOGIN SCREEN --- */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: #fff; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 50px rgba(251,191,36,0.3); width: 92%; max-width: 400px; color: #000; }
+        .login-box h2 { font-family: 'Bubblegum Sans'; color: var(--navy); font-size: 28px; margin-bottom: 20px; }
+        .login-box input { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 18px; text-align: center; margin-bottom: 20px; outline: none; }
+        .login-box button { width: 100%; padding: 15px; background: var(--navy); color: var(--gold); border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; }
+
+        /* --- UI DASHBOARD --- */
+        #main-content { display: none; padding: 10px; }
+        .admin-panel { max-width: 1100px; margin: 10px auto; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); color: #000; }
+        .admin-title { font-weight: 900; font-size: 22px; text-align: center; margin-bottom: 20px; color: var(--navy); letter-spacing: 1px; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-weight: 800; font-size: 11px; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        input, textarea { padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Biryani'; }
+        textarea { grid-column: 1 / -1; height: 130px; font-family: 'Tiro Devanagari Hindi'; }
+        .format-selection { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; background: #f1f5f9; border-radius: 12px; border: 2px dashed var(--navy); margin-top: 5px; }
+        .format-selection label { font-size: 14px; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .render-btn { grid-column: 1 / -1; background: var(--navy); color: var(--gold); padding: 18px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 18px; margin-top: 10px; text-transform: uppercase; }
+        .admin-footer { text-align: center; margin-top: 25px; font-size: 14px; font-weight: 800; color: #64748b; }
+        .admin-footer a { color: var(--navy); text-decoration: none; border-bottom: 2px solid var(--gold); }
+
+        /* --- PDF LAYOUTS --- */
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        #render-source { position: absolute; left: -9999px; top: 0; }
+
+        /* A4 Page (30 MCQ - FIXED LOGO) */
+        .ebook-page { width: 210mm; height: 297mm; background: white; color: #000; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .header { background: var(--navy); height: 45px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--gold); flex-shrink: 0; width: 100%; }
+        .h-topic { font-family: 'Bubblegum Sans'; color: #fbbf24; font-size: 16px; background: rgba(255,255,255,0.1); padding: 3px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .h-brand-wrap { display: flex; align-items: center; gap: 10px; height: 100%; }
+        .h-brand { font-family: 'Bubblegum Sans'; color: white; font-size: 24px; }
+        .h-logo { height: 35px; width: 35px; border-radius: 50%; border: 2px solid white; background: white; object-fit: cover; flex-shrink: 0; }
+        
+        .content-body { height: 218mm; display: flex; padding: 10px 15px; gap: 15px; flex-grow: 1; overflow: hidden; }
+        .column { flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+        .mcq-item { padding: 5px 12px; background: #f8fafc; border-radius: 12px; border-left: 5px solid var(--navy); width: 100%; }
+        .q-text { font-family: 'Tiro Devanagari Hindi'; font-weight: 700; font-size: 10px; line-height: 1.2; margin-bottom: 4px; }
+        .opt-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .opt-box { display: flex; align-items: center; gap: 4px; font-family: 'Tiro Devanagari Hindi'; font-weight: 600; font-size: 9.5px; }
+        .bubble { width: 18px; height: 18px; background: var(--navy); color: #fff; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: 'Bubblegum Sans'; font-size: 10px; flex-shrink: 0; }
+        .correct-answer { color: var(--correct-green) !important; font-weight: 900 !important; }
+        .footer { height: 40px; background: var(--navy); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-top: 3px solid var(--gold); flex-shrink: 0; }
+        .foot-pill { background: rgba(255,255,255,0.1); padding: 4px 15px; border-radius: 20px; font-size: 10px; color: #fff; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); }
+        .pg-pill { background: #fbbf24; color: #0f172a; font-weight: 900; font-size: 12px; padding: 5px 25px; border-radius: 20px; font-family: 'Biryani'; }
+
+        /* --- PPT DESIGN (FIXED TOP LEFT) --- */
+        .ppt-page { width: 1920px; height: 1080px; background: #000; color: #fff; display: flex; flex-direction: column; position: relative; overflow: hidden; border: 25px solid #111; }
+        .ppt-header { height: 140px; background: #000; display: flex; justify-content: space-between; align-items: center; padding: 0 80px; border-bottom: 10px solid #222; }
+        .ppt-topic { font-family: 'Bubblegum Sans'; font-size: 55px; color: #fbbf24; } /* Fixed Size */
+        .ppt-brand { font-family: 'Bubblegum Sans'; font-size: 70px; color: #fff; }
+        .ppt-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 120px; }
+        .ppt-q { font-family: 'Tiro Devanagari Hindi'; font-size: 65px; font-weight: 800; text-align: center; margin-bottom: 90px; line-height: 1.3; }
+        .ppt-opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; width: 100%; max-width: 1600px; }
+        .ppt-opt { display: flex; align-items: center; gap: 35px; background: rgba(255,255,255,0.05); padding: 45px 60px; border-radius: 40px; border: 2px solid rgba(255,255,255,0.1); }
+        .ppt-bubble { width: 100px; height: 100px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-family: 'Bubblegum Sans'; font-size: 55px; flex-shrink: 0; color: #000; }
+        .ppt-val { font-family: 'Tiro Devanagari Hindi'; font-size: 50px; font-weight: 700; color: #fff; }
+        .ppt-footer { height: 120px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 80px; }
+        .ppt-foot-txt { font-family: 'Biryani'; font-size: 36px; font-weight: 800; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <!-- Login -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>🔒 Master Access</h2>
+            <input type="password" id="pass-input" placeholder="">
+            <button onclick="checkPassword()">Unlock</button>
+            <p style="font-size: 12px; margin-top: 15px; color: #64748b;">Secured by Guddu Sharma</p>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="main-content">
+        <div id="loader">
+            <h1 style="font-family:'Bubblegum Sans'; color:var(--gold); margin:0;">🔒 MAKING...</h1>
+            <p id="status-text" style="font-family:'Biryani'; color: #fff; margin:10px 0;">Processing</p>
+            <p style="font-size: 11px; color: #94a3b8;">Item <span id="pg-count">0</span> / <span id="pg-total">0</span></p>
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-title">🚀 PPT + NOTES MAKER [Made With Guddu Sharma]</div>
+            <div class="admin-grid">
+                <div class="field"><label>HEADER TOPIC:</label><input type="text" id="inTopic" value=""></div>
+                <div class="field"><label>CHANNEL NAME:</label><input type="text" id="inBrand" value="VIVEK EDUCATION CENTRE"></div>
+                <div class="field"><label>QUESTION NO. </label><input type="number" id="inQStart" value=""></div>
+                <div class="field"><label>LOGO:</label><input type="file" id="inLogo" accept="image/*"></div>
+                
+                <div class="field"><label>FOOTER LEFT:</label><input type="text" id="inFL" value="New Admission Open"></div>
+                <div class="field"><label>FOOTER RIGHT:</label><input type="text" id="inFR" value="BY VIVEK SIR"></div>
+                <div class="field"><label>PAGE NO:</label><input type="number" id="inPg" value="1"></div>
+                
+                <textarea id="inData" placeholder=""></textarea>
+                
+                <div class="format-selection">
+                    <label><input type="checkbox" id="checkA4" checked> 📄 NOTES</label>
+                    <label><input type="checkbox" id="checkPPT"> 🎥 PPT </label>
+                </div>
+            </div>
+            <button class="render-btn" onclick="masterProcess()">⚡ START </button>
+            <div class="admin-footer">Made with ❤️ by <a href="https://www.instagram.com/guddu.xiv/" target="_blank">Guddu Sharma</a></div>
+        </div>
+    </div>
+
+    <div id="render-source"></div>
+
+    <script>
+        // Password Protection
+        function checkPassword() {
+            const input = document.getElementById('pass-input').value;
+            if (btoa(input) === "R3VkZHUyMDA1") { // Base64 for Guddu2005
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            } else { alert("Wrong Password!"); }
+        }
+
+        // Anti-Copy
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => { if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false; };
+
+        let logoBase64 = "";
+        document.getElementById('inLogo').onchange = e => {
+            const r = new FileReader();
+            r.onload = () => logoBase64 = r.result;
+            r.readAsDataURL(e.target.files[0]);
+        };
+
+        let colorHistory = new Set();
+        function getUniqueNeonColor() {
+            let color;
+            do { const h = Math.floor(Math.random() * 360); color = `hsl(${h}, 90%, 70%)`; } 
+            while (colorHistory.has(color) && colorHistory.size < 360);
+            colorHistory.add(color);
+            return color;
+        }
+
+        async function masterProcess() {
+            const raw = document.getElementById('inData').value.trim();
+            if(!raw) return alert("Please enter data!");
+            const doA4 = document.getElementById('checkA4').checked;
+            const doPPT = document.getElementById('checkPPT').checked;
+
+            document.getElementById('loader').style.display = "flex";
+            const mcqs = parseMCQs(raw);
+            colorHistory.clear();
+
+            if(doA4) await generateA4(mcqs);
+            if(doPPT) await generatePPT(mcqs);
+
+            document.getElementById('loader').style.display = "none";
+        }
+
+        function parseMCQs(text) {
+            const lines = text.split(/\n/);
+            let list = []; let current = null;
+            lines.forEach(l => {
+                l = l.trim(); if(!l) return;
+                if (l.match(/^[A-D]\./i) || l.match(/\s[A-Z]\./i) || l.includes('A.')) {
+                    if(current) { current.opts = l.split(/(?=[A-D]\.)/i); list.push(current); current = null; }
+                } else { current = { q: l, opts: [] }; }
+            });
+            return list;
+        }
+
+        async function generateA4(mcqs) {
+            document.getElementById('status-text').innerText = "Building A4 Master-Structure...";
+            const source = document.getElementById('render-source');
+            source.innerHTML = ''; source.style.width = "210mm";
+            const startPg = parseInt(document.getElementById('inPg').value) || 1;
+            const startQ = parseInt(document.getElementById('inQStart').value) || 1;
+            const totalP = Math.ceil(mcqs.length / 30);
+            document.getElementById('pg-total').innerText = totalP;
+
+            for(let i=0; i < totalP; i++) {
+                const page = document.createElement('div');
+                page.className = 'ebook-page'; page.id = `a4-n-${i}`;
+                const items = mcqs.slice(i * 30, (i + 1) * 30);
+                let body = `<div class="content-body">
+                    <div class="column">${items.slice(0, 15).map((m, idx) => renderA4Item(m, startQ + (i*30) + idx, idx)).join('')}</div>
+                    <div class="column">${items.slice(15, 30).map((m, idx) => renderA4Item(m, startQ + (i*30) + 15 + idx, idx+15)).join('')}</div>
+                </div>`;
+                page.innerHTML = `<div class="header"><div class="h-topic">${document.getElementById('inTopic').value}</div><div class="h-brand-wrap"><span class="h-brand">${document.getElementById('inBrand').value}</span>${logoBase64 ? `<img src="${logoBase64}" class="h-logo">` : ''}</div></div>${body}<div class="footer"><div class="foot-pill">${document.getElementById('inFL').value}</div><div class="pg-pill">PAGE ${startPg + i}</div><div class="foot-pill">${document.getElementById('inFR').value}</div></div>`;
+                source.appendChild(page);
+            }
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            for(let i=0; i < totalP; i++) {
+                document.getElementById('pg-count').innerText = i+1;
+                const canvas = await html2canvas(document.getElementById(`a4-n-${i}`), { scale: 2.5, useCORS: true });
+                if (i > 0) pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+                document.getElementById(`a4-n-${i}`).remove();
+            }
+            pdf.save(`${document.getElementById('inBrand').value}_Premium_A4.pdf`);
+        }
+
+        async function generatePPT(mcqs) {
+            document.getElementById('status-text').innerText = "Building Neon PPT Slides...";
+            const source = document.getElementById('render-source');
+            source.innerHTML = ''; source.style.width = "1920px";
+            const startQ = parseInt(document.getElementById('inQStart').value) || 1;
+            document.getElementById('pg-total').innerText = mcqs.length;
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'px', [1920, 1080]);
+
+            for(let i=0; i < mcqs.length; i++) {
+                document.getElementById('pg-count').innerText = i+1;
+                const slide = document.createElement('div');
+                slide.className = 'ppt-page'; slide.id = `ppt-n-${i}`;
+                const clr = getUniqueNeonColor(); const m = mcqs[i];
+                let opts = m.opts.map(o => {
+                    const clean = o.replace('✅','').trim();
+                    return `<div class="ppt-opt" style="border-left-color:${clr}"><div class="ppt-bubble" style="background:${clr}">${clean.charAt(0)}</div><div class="ppt-val">${clean.substring(2)}</div></div>`;
+                }).join('');
+                slide.innerHTML = `<div class="ppt-header"><div class="ppt-topic">${document.getElementById('inTopic').value}</div><div class="ppt-brand">${document.getElementById('inBrand').value}</div></div><div class="ppt-content"><div class="ppt-q" style="color:${clr}">${startQ + i}. ${m.q}</div><div class="ppt-opt-grid">${opts}</div></div><div class="ppt-footer"><div class="ppt-foot-txt">${document.getElementById('inFL').value}</div><div class="ppt-foot-txt">${document.getElementById('inFR').value}</div></div>`;
+                source.appendChild(slide);
+                const canvas = await html2canvas(slide, { scale: 1.2, useCORS: true });
+                if (i > 0) pdf.addPage([1920, 1080], 'l');
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 1920, 1080);
+                document.getElementById(`ppt-n-${i}`).remove();
+            }
+            pdf.save(`${document.getElementById('inBrand').value}_Neon_PPT.pdf`);
+        }
+
+        function renderA4Item(m, qNum, colorIdx) {
+            const palette = ['#1e293b', '#991b1b', '#4338ca', '#b45309', '#701a75', '#1e1b4b', '#1e3a8a', '#831843'];
+            const clr = palette[colorIdx % palette.length];
+            let opts = m.opts.map(o => {
+                const isC = o.includes('✅'); const clean = o.replace('✅','').trim();
+                return `<div class="opt-box"><span class="bubble ${isC?'correct-bubble':''}" style="${isC?'':'background:'+clr}">${clean.charAt(0)}</span><span class="${isC?'correct-answer':''}" style="${isC?'':'color:'+clr}">${clean.substring(2)}</span></div>`;
+            }).join('');
+            return `<div class="mcq-item" style="border-left-color:${clr}"><span class="q-text" style="color:${clr}">${qNum}. ${m.q}</span><div class="opt-row">${opts}</div></div>`;
+        }
+    </script>
+</body>
+</html>
